@@ -1,0 +1,4 @@
+{
+  "default_engine": "code",
+  "_options": "code = hand-written HTML/JS + Playwright + ffmpeg | hyperframes = HyperFrames composition and render | ask = ask on every new video. Override per user in ~/.claude/motion-studio.json"
+}

@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Motion Studio — template</title>
+<!-- EXAMPLE TEMPLATE: shows the contract (MOTION, seek, renderAudio). Replace everything with your video. -->
+<style>
+  @font-face { font-family: "Space Grotesk"; src: url("SpaceGrotesk-latin.woff2") format("woff2"); font-weight: 300 700; font-display: block; }
+  :root { --bg: #0d0d0f; --ink: #f4f1ea; --accent: #ff4d2e; --muted: #8a877f; --font: 'Space Grotesk', system-ui, sans-serif; }
+  html, body { margin: 0; background: #000; overflow: hidden; }
+  #stage { position: relative; overflow: hidden; background: var(--bg); color: var(--ink); font-family: var(--font); }
+  .layer { position: absolute; inset: 0; will-change: transform; }
+  .line { position: absolute; overflow: hidden; line-height: 0.9; }
+  .line span { display: block; font-weight: 700; letter-spacing: -0.04em; will-change: transform; }
+  .card { position: absolute; border: 2px solid var(--ink); border-radius: 18px; padding: 24px 32px 28px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-end; }
+  .card b { display: block; font-size: 1.7em; line-height: 1; letter-spacing: -0.03em; }
+  .card small { color: var(--muted); font-size: 0.6em; margin-top: 8px; }
+  #wipe { position: absolute; inset: 0; background: var(--accent); }
+  #count { position: absolute; font-weight: 700; letter-spacing: -0.06em; color: var(--bg); line-height: 0.8; font-variant-numeric: tabular-nums; }
+  #countLabel { position: absolute; color: var(--bg); font-weight: 700; line-height: 1.02; letter-spacing: -0.03em; text-wrap: balance; }
+  #end { position: absolute; inset: 0; background: var(--bg); }
+  #logo { position: absolute; display: flex; white-space: nowrap; align-items: center; gap: 0.35em; font-weight: 700; letter-spacing: -0.03em; }
+  #logo i { display: inline-block; width: 0.8em; height: 0.8em; background: var(--accent); border-radius: 50%; }
+  #cta { position: absolute; color: var(--muted); text-wrap: balance; }
+  #rule { position: absolute; height: 6px; background: var(--accent); transform-origin: 0 50%; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="layer" id="cam">
+    <div id="words"></div>
+    <div id="cards"></div>
+  </div>
+  <div id="wipe"><div id="count">0</div><div id="countLabel">frames per second, all written in code</div></div>
+  <div id="end"><div id="logo"><i></i><span>Motion Studio</span></div><div id="rule"></div><div id="cta">The prompt is 10%. The studio is 90%.</div></div>
+</div>
+
+<script type="module">
+import { prog, ease, spring, beatGrid, format, lerp, clamp, preview, renderMix, sfx } from './kit.js';
+
+const F = format();
+const BPM = 120, G = beatGrid(BPM);           // 1 beat = 0.5 s; 1 bar = 2 s
+const DURATION = G.bar(4);                     // 4 bars = 8 s
+window.MOTION = { width: F.w, height: F.h, fps: 30, duration: DURATION, ready: document.fonts.ready };
+
+const $ = s => document.querySelector(s);
+const stage = $('#stage');
+stage.style.width = F.w + 'px'; stage.style.height = F.h + 'px';
+
+// Layout per format: recompose, don't just shrink.
+const V = F.vertical;
+const U = V ? F.w / 1080 : F.h / 1080;               // relative unit
+const M = V ? 90 : 140;                              // margin
+const typeSize = V ? 230 : 250;
+stage.style.fontSize = (V ? 40 : 36) + 'px';
+
+const WORDS = ['Make', 'it', 'move.'];
+const words = WORDS.map((w, i) => {
+  const line = document.createElement('div'); line.className = 'line';
+  const span = document.createElement('span'); span.textContent = w; span.style.fontSize = typeSize * U + 'px';
+  if (i === 2) span.style.color = 'var(--accent)';
+  line.appendChild(span); $('#words').appendChild(line);
+  line.style.left = M + 'px';
+  line.style.top = (V ? 420 : 150) + i * typeSize * 0.92 * U + 'px';
+  return { line, span };
+});
+
+const CARDS = [['1', 'HTML file'], ['30', 'frames / sec'], ['0', 'frameworks']];
+const cards = CARDS.map(([b, s], i) => {
+  const c = document.createElement('div'); c.className = 'card';
+  c.innerHTML = `<b>${b}</b><small>${s}</small>`;
+  const w = V ? F.w - 2 * M : 480, h = V ? 260 : 300;
+  Object.assign(c.style, { width: w + 'px', height: h + 'px', fontSize: (V ? 64 : 60) + 'px' });
+  c.dataset.x = V ? M : M + i * (w + 40);
+  c.dataset.y = V ? 820 + i * (h + 36) : 640;
+  $('#cards').appendChild(c); return c;
+});
+
+const count = $('#count'), countLabel = $('#countLabel');
+count.style.fontSize = (V ? 520 : 560) + 'px';
+count.style.left = M + 'px'; count.style.top = (V ? 640 : 150) + 'px';
+countLabel.style.left = (V ? M : 980) + 'px'; countLabel.style.top = (V ? 1140 : 300) + 'px';
+countLabel.style.fontSize = (V ? 72 : 96) + 'px'; countLabel.style.maxWidth = (V ? F.w - 2 * M : 760) + 'px';
+
+const logo = $('#logo'), cta = $('#cta'), rule = $('#rule');
+logo.style.fontSize = (V ? 104 : 200) + 'px';
+logo.style.left = M + 'px'; logo.style.top = (V ? 820 : 360) + 'px';
+rule.style.left = M + 'px'; rule.style.top = (V ? 970 : 640) + 'px'; rule.style.width = (F.w - 2 * M) + 'px';
+cta.style.left = M + 'px'; cta.style.top = (V ? 1010 : 690) + 'px'; cta.style.fontSize = (V ? 52 : 56) + 'px';
+cta.style.maxWidth = (F.w - 2 * M) + 'px';
+
+// Scenes on the grid: A = bar 0, B = bar 1, C = bar 2, D = bar 3.
+const T = { words: G.bar(0), cards: G.bar(1), wipe: G.bar(2), end: G.bar(3) };
+
+window.seek = (t) => {
+  // A — words rise through a mask, one per beat, with a touch of motion blur.
+  words.forEach(({ span }, i) => {
+    const p = prog(t, T.words + G.beat(i) * 0.9, 0.45, ease.outExpo);
+    const out = prog(t, T.cards - 0.25 + i * 0.05, 0.35, ease.inCubic);
+    const y = (1 - p) * 110 - out * 140;
+    span.style.transform = `translateY(${y}%)`;
+    span.style.visibility = out >= 1 ? 'hidden' : 'visible';
+    span.style.filter = p < 0.98 && p > 0.02 ? `blur(${(1 - p) * 6}px)` : 'none';
+  });
+
+  // Camera: continuous push-in + a shift on bar B.
+  const push = lerp(1, 1.06, prog(t, 0, T.wipe, ease.linear));
+  const shift = prog(t, T.cards, 0.6, ease.inOutCubic) * (V ? -120 : -60);
+  $('#cam').style.transform = `translateY(${shift}px) scale(${push})`;
+
+  // B — spring cards, one per beat.
+  cards.forEach((c, i) => {
+    const s = spring(t - (T.cards + G.beat(i)), { stiffness: 220, damping: 16 });
+    const x = +c.dataset.x, y = +c.dataset.y;
+    c.style.opacity = s > 0.001 ? 1 : 0;
+    c.style.transform = `translate(${x}px, ${y + (1 - s) * 140}px) rotate(${(1 - s) * (i % 2 ? 4 : -4)}deg)`;
+  });
+
+  // C — diagonal wipe in the accent color and a counter landing on 30.
+  const w = prog(t, T.wipe - 0.15, 0.4, ease.inOutExpo);
+  $('#wipe').style.clipPath = `polygon(0 ${100 - w * 130}%, 100% ${130 - w * 130}%, 100% 100%, 0 100%)`;
+  const n = Math.round(30 * prog(t, T.wipe + 0.1, 1.2, ease.outQuint));
+  count.textContent = n;
+  const lab = prog(t, T.wipe + G.beat(2), 0.4, ease.outCubic);
+  countLabel.style.opacity = lab; countLabel.style.transform = `translateY(${(1 - lab) * 30}px)`;
+
+  // D — end card: curtain rises, spring logo, CTA on the next beat.
+  const e = prog(t, T.end - 0.05, 0.35, ease.inOutExpo);
+  $('#end').style.clipPath = `inset(${(1 - e) * 100}% 0 0 0)`;
+  const ls = spring(t - (T.end + 0.1), { stiffness: 260, damping: 18 });
+  logo.style.transform = `translateX(${(1 - ls) * -80}px) scale(${0.9 + 0.1 * ls})`;
+  logo.style.opacity = clamp(ls * 2);
+  rule.style.transform = `scaleX(${prog(t, T.end + G.beat(1) - 0.1, 0.6, ease.inOutExpo)})`;
+  const c2 = prog(t, T.end + G.beat(1), 0.5, ease.outCubic);
+  cta.style.opacity = c2; cta.style.transform = `translateY(${(1 - c2) * 24}px)`;
+};
+
+// Sound: the same beat grid as the animation.
+window.renderAudio = (sampleRate) => renderMix(DURATION, sampleRate, (ctx, out) => {
+  const bassLine = [45, 45, 48, 43];                               // A, A, C, G
+  for (let bar = 0; bar < 4; bar++) {
+    for (let b = 0; b < 4; b++) {
+      const t = G.bar(bar) + G.beat(b);
+      if (bar > 0 || b > 1) sfx.kick(ctx, out, t, { gain: 0.8 });
+      if (b % 2 === 1 && bar > 0) sfx.clap(ctx, out, t);
+      sfx.hat(ctx, out, t + G.spb / 2, { p: b % 2 ? 0.3 : -0.3 });
+      sfx.bass(ctx, out, t, bassLine[bar], G.spb * 0.9, { gain: bar === 3 ? 0.2 : 0.3 });
+    }
+    if (bar < 3) sfx.pad(ctx, out, G.bar(bar), [69, 72, 76].map(m => m + (bassLine[bar] - 45)), G.bar(1));
+  }
+  [0, 1, 2].forEach(i => sfx.pop(ctx, out, T.words + G.beat(i) * 0.9));     // words
+  [0, 1, 2].forEach(i => sfx.tick(ctx, out, T.cards + G.beat(i), { f: 1800 + i * 300 }));
+  sfx.whoosh(ctx, out, T.wipe, { dur: 0.45 });
+  for (let i = 0; i < 12; i++) sfx.tick(ctx, out, T.wipe + 0.1 + i * 0.09, { gain: 0.06 });
+  sfx.riser(ctx, out, T.end, { dur: 1.5 });
+  sfx.impact(ctx, out, T.end);
+});
+
+preview(stage);
+window.seek(0);
+</script>
+</body>
+</html>

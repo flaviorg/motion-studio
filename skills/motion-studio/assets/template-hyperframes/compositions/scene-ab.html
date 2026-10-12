@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Space Grotesk"; src: url("assets/SpaceGrotesk-latin.woff2") format("woff2"); font-weight: 300 700; font-display: block; }
+        #scene-ab-root { position: absolute; inset: 0; color: #f4f1ea; font-family: "Space Grotesk", sans-serif; }
+        #ab-cam { position: absolute; inset: 0; }
+        .ab-line { position: absolute; left: 140px; overflow: hidden; line-height: 0.9; }
+        .ab-word { display: block; font-size: 250px; font-weight: 700; letter-spacing: -0.04em; }
+        #ab-w3 { color: #ff4d2e; }
+        #ab-line-1 { top: 150px; } #ab-line-2 { top: 380px; } #ab-line-3 { top: 610px; }
+        .ab-card {
+          position: absolute; top: 640px; width: 480px; height: 300px; padding: 24px 32px 28px;
+          border: 2px solid #f4f1ea; border-radius: 18px;
+          display: flex; flex-direction: column; justify-content: flex-end; font-size: 60px;
+        }
+        .ab-card b { display: block; font-size: 1.7em; line-height: 1; letter-spacing: -0.03em; }
+        .ab-card small { color: #8a877f; font-size: 0.6em; margin-top: 8px; }
+        #ab-card-1 { left: 140px; } #ab-card-2 { left: 660px; } #ab-card-3 { left: 1180px; }
+      </style>
+      <div id="scene-ab-root" data-composition-id="scene-ab" data-width="1920" data-height="1080">
+        <div id="ab-cam">
+          <div class="ab-line" id="ab-line-1"><span class="ab-word" id="ab-w1" data-layout-allow-overflow>Make</span></div>
+          <div class="ab-line" id="ab-line-2"><span class="ab-word" id="ab-w2" data-layout-allow-overflow>it</span></div>
+          <div class="ab-line" id="ab-line-3"><span class="ab-word" id="ab-w3" data-layout-allow-overflow>move.</span></div>
+          <div class="ab-card" id="ab-card-1"><b>1</b><small>HTML file</small></div>
+          <div class="ab-card" id="ab-card-2"><b>30</b><small>frames / sec</small></div>
+          <div class="ab-card" id="ab-card-3"><b>0</b><small>frameworks</small></div>
+        </div>
+      </div>
+      <script>
+        (() => {
+          // Scene-local times (starts at 0 s in the video). 120 BPM → beat = 0.5 s.
+          const BEAT = 0.5, CARDS = 2;
+          const tl = gsap.timeline({ paused: true });
+          tl.fromTo("#ab-cam", { scale: 1, y: 0 }, { scale: 1.06, duration: 4.4, ease: "none" }, 0);
+          tl.to("#ab-cam", { y: -60, duration: 0.6, ease: "power2.inOut" }, CARDS);
+          ["#ab-w1", "#ab-w2", "#ab-w3"].forEach((id, i) => {
+            tl.fromTo(id, { yPercent: 110, filter: "blur(6px)" },
+              { yPercent: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, i * BEAT * 0.9);
+            tl.to(id, { yPercent: -140, duration: 0.35, ease: "power3.in" }, CARDS - 0.25 + i * 0.05);
+          });
+          ["#ab-card-1", "#ab-card-2", "#ab-card-3"].forEach((id, i) => {
+            tl.fromTo(id, { y: 140, rotation: i % 2 ? 4 : -4, opacity: 0 },
+              { y: 0, rotation: 0, opacity: 1, duration: 0.7, ease: "back.out(1.7)" }, CARDS + i * BEAT);
+          });
+          window.__timelines["scene-ab"] = tl;
+        })();
+      </script>
+    </template>
+  </body>
+</html>

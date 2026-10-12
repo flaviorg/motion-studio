@@ -1,0 +1,10 @@
+{
+  "name": "motion-studio",
+  "version": "1.0.0",
+  "description": "A motion graphics studio for Claude Code: brief, real brand capture, beat grid, code-synthesized soundtrack, scored critique loop and MP4 render — with a switchable engine (pure code or HyperFrames).",
+  "author": { "name": "flaviorg", "url": "https://github.com/flaviorg" },
+  "homepage": "https://github.com/flaviorg/motion-studio",
+  "repository": "https://github.com/flaviorg/motion-studio",
+  "license": "MIT",
+  "keywords": ["motion-graphics", "video", "animation", "playwright", "ffmpeg", "hyperframes", "reels", "youtube", "skill"]
+}

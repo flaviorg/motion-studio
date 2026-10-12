@@ -1,0 +1,14 @@
+{
+  "name": "motion-studio",
+  "owner": { "name": "flaviorg", "url": "https://github.com/flaviorg" },
+  "metadata": { "description": "Motion Studio — motion graphics videos made by Claude Code, from brief to MP4." },
+  "plugins": [
+    {
+      "name": "motion-studio",
+      "source": "./",
+      "description": "Skill: a motion graphics studio process (brief, brand capture, beat grid, sound on the beat, scored critique) with a code or HyperFrames render engine.",
+      "version": "1.0.0",
+      "category": "skill"
+    }
+  ]
+}

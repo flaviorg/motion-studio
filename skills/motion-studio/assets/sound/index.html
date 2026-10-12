@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Motion Studio — soundtrack</title>
+<!-- Audio-only page: used by the hyperframes engine to generate the soundtrack in code.
+     Export with: node SKILL_DIR/scripts/render.mjs PROJ/sound --audio-only --out PROJ/assets
+     Adjust BPM, DURATION and the scene times (T) to match the approved beat grid. -->
+</head>
+<body style="margin:0;background:#111;color:#eee;font:16px system-ui;padding:24px">
+<p>Motion Studio soundtrack. Click to listen.</p>
+<script type="module">
+import { beatGrid, renderMix, sfx } from './kit.js';
+
+const BPM = 120, G = beatGrid(BPM);
+const DURATION = G.bar(4);                                  // same length as the composition
+const T = { a: G.bar(0), b: G.bar(1), c: G.bar(2), d: G.bar(3) };   // scene starts on the grid
+
+window.MOTION = { width: 1920, height: 1080, fps: 30, duration: DURATION };
+window.seek = () => {};                                     // no picture: audio only
+
+window.renderAudio = (sampleRate) => renderMix(DURATION, sampleRate, (ctx, out) => {
+  const bassLine = [45, 45, 48, 43];
+  for (let bar = 0; bar < DURATION / G.bar(1); bar++) {
+    for (let b = 0; b < 4; b++) {
+      const t = G.bar(bar) + G.beat(b);
+      sfx.kick(ctx, out, t, { gain: 0.8 });
+      if (b % 2 === 1) sfx.clap(ctx, out, t);
+      sfx.hat(ctx, out, t + G.spb / 2, { p: b % 2 ? 0.3 : -0.3 });
+      sfx.bass(ctx, out, t, bassLine[bar % 4], G.spb * 0.9);
+    }
+  }
+  // SFX on the grid transitions:
+  sfx.whoosh(ctx, out, T.b, { dur: 0.45 });
+  sfx.whoosh(ctx, out, T.c, { dur: 0.45 });
+  sfx.riser(ctx, out, T.d, { dur: 1.5 });
+  sfx.impact(ctx, out, T.d);
+});
+
+addEventListener('click', async () => {
+  const ac = new AudioContext(), buf = await window.renderAudio(ac.sampleRate);
+  const s = ac.createBufferSource(); s.buffer = buf; s.connect(ac.destination); s.start();
+});
+</script>
+</body>
+</html>
